@@ -2,7 +2,10 @@ package user
 
 import (
 	"be-assignment/domain"
+	"be-assignment/dto"
+	"be-assignment/internal/util"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
@@ -17,7 +20,7 @@ func NewService(repo domain.UserRepository) domain.UserService {
 }
 
 // GetUserByID implements domain.UserService.
-func (s *service) GetUserByID(id string) (domain.User, error) {
+func (s *service) GetUser(id string) (domain.User, error) {
 	panic("unimplemented")
 }
 
@@ -31,13 +34,26 @@ func (s *service) GetAllUsers() ([]domain.User, error) {
 }
 
 // CreateUser implements domain.UserService.
-func (s *service) Register(user domain.User) error {
-	_, err := s.repo.FindByID(user.ID)
+func (s *service) Register(userReq dto.RegisterRequest) error {
+	if err := validator.New().Struct(userReq); err != nil {
+		return err
+	}
+
+	_, err := s.repo.FindByEmail(userReq.Email)
 	if err == nil {
 		return domain.ErrUserAlreadyExists
 	}
 
+	var user domain.User
 	user.ID = uuid.New().String()
+	user.Username = userReq.Username
+	user.Email = userReq.Email
+
+	hashedPassword, err := util.HashPassword(userReq.Password)
+	if err != nil {
+		return err
+	}
+	user.Password = hashedPassword
 
 	if err := s.repo.Insert(user); err != nil {
 		return err

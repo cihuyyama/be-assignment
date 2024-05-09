@@ -1,27 +1,30 @@
 package domain
 
-type User struct {
-	ID        string `json:"id"`
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	CreatedAt string `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt string `json:"updated_at" gorm:"autoUpdateTime"`
-}
+import (
+	"be-assignment/dto"
+	"time"
+)
 
-type Account struct {
-	ID     string `json:"id"`
-	UserID string `json:"user_id"`
-	Type   string `json:"type"`
+type User struct {
+	ID        string    `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email" gorm:"unique"`
+	Password  string    `json:"password"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
 type UserRepository interface {
 	FindAll() ([]User, error)
 	FindByID(id string) (User, error)
+	FindByEmail(email string) (User, error)
 	Insert(user User) error
+	Update(user User) error
+	Delete(id string) error
 }
 
 type UserService interface {
 	GetAllUsers() ([]User, error)
-	GetUserByID(id string) (User, error)
-	Register(user User) error
+	GetUser(id string) (User, error)
+	Register(userReq dto.RegisterRequest) error
 }
