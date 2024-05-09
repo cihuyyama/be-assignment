@@ -16,6 +16,16 @@ func NewRepository(con *gorm.DB) domain.UserRepository {
 	}
 }
 
+// FindByID implements domain.UserRepository.
+func (r *repository) FindByID(id string) (domain.User, error) {
+	var user domain.User
+	tx := r.db.Where("id = ?", id).First(&user)
+	if tx.Error != nil {
+		return domain.User{}, tx.Error
+	}
+	return user, nil
+}
+
 // FindAll implements domain.UserRepository.
 func (r *repository) FindAll() ([]domain.User, error) {
 	var users *[]domain.User

@@ -16,10 +16,12 @@ type Account struct {
 
 type UserRepository interface {
 	FindAll() ([]User, error)
+	FindByID(id string) (User, error)
 	Insert(user User) error
 }
 
 type UserService interface {
 	GetAllUsers() ([]User, error)
+	GetUserByID(id string) (User, error)
 	Register(user User) error
 }
