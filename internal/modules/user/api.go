@@ -22,6 +22,7 @@ func NewRoute(app *gin.Engine, userService domain.UserService) {
 	{
 		v1Public.POST("/register", route.Register)
 		v1Public.POST("/login", route.Login)
+		v1Public.GET("/users/all", route.GetAllUser)
 	}
 
 	v1Private := app.Group("/api/v1")
@@ -31,6 +32,14 @@ func NewRoute(app *gin.Engine, userService domain.UserService) {
 	}
 }
 
+// @Summary Register a new user
+// @Description Register a new user
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body dto.RegisterRequest true "Register Request"
+// @Success 200 {object} dto.Response
+// @Router /register [post]
 func (r *route) Register(c *gin.Context) {
 	var userReq dto.RegisterRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
@@ -76,6 +85,14 @@ func (r *route) Register(c *gin.Context) {
 	})
 }
 
+// @Summary Login a user
+// @Description Login a user
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param body body dto.LoginRequest true "Login Request"
+// @Success 200 {object} dto.Response
+// @Router /login [post]
 func (r *route) Login(c *gin.Context) {
 	var userReq dto.LoginRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
@@ -122,6 +139,14 @@ func (r *route) Login(c *gin.Context) {
 	})
 }
 
+// @Summary Get user data
+// @Description Get user data using token from the authorization header
+// @Tags User
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.Response
+// @Router /users [get]
 func (r *route) GetUser(c *gin.Context) {
 	user, err := r.userService.GetUser(c)
 	if err != nil {
@@ -143,5 +168,41 @@ func (r *route) GetUser(c *gin.Context) {
 			UpdatedAt: user.UpdatedAt,
 		},
 		Status: 200,
+	})
+}
+
+// @Summary Get all user data
+// @Description Get all user data
+// @Tags User
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.Response
+// @Router /users/all [get]
+func (r *route) GetAllUser(c *gin.Context) {
+	users, err := r.userService.GetAllUsers()
+	if err != nil {
+		c.JSON(500, &dto.Response{
+			Message: err.Error(),
+			Data:    nil,
+			Status:  500,
+		})
+		return
+	}
+
+	var userDataResponse []dto.UserDataResponse
+	for _, user := range users {
+		userDataResponse = append(userDataResponse, dto.UserDataResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		})
+	}
+
+	c.JSON(200, &dto.Response{
+		Message: "Success",
+		Data:    userDataResponse,
+		Status:  200,
 	})
 }
