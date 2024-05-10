@@ -3,6 +3,7 @@ package user
 import (
 	"be-assignment/domain"
 	"be-assignment/dto"
+	"be-assignment/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -19,9 +20,14 @@ func NewRoute(app *gin.Engine, userService domain.UserService) {
 
 	v1Public := app.Group("/api/v1")
 	{
-		v1Public.GET("/users", route.getAllUsers)
 		v1Public.POST("/register", route.Register)
 		v1Public.POST("/login", route.Login)
+	}
+
+	v1Private := app.Group("/api/v1")
+	v1Private.Use(middleware.Authenticate())
+	{
+		v1Private.GET("/users", route.GetUser)
 	}
 }
 
@@ -116,8 +122,8 @@ func (r *route) Login(c *gin.Context) {
 	})
 }
 
-func (r *route) getAllUsers(c *gin.Context) {
-	users, err := r.userService.GetAllUsers()
+func (r *route) GetUser(c *gin.Context) {
+	user, err := r.userService.GetUser(c)
 	if err != nil {
 		c.JSON(500, &dto.Response{
 			Message: err.Error(),
@@ -129,7 +135,13 @@ func (r *route) getAllUsers(c *gin.Context) {
 
 	c.JSON(200, &dto.Response{
 		Message: "Success",
-		Data:    users,
-		Status:  200,
+		Data: &dto.UserDataResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+		Status: 200,
 	})
 }

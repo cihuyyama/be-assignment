@@ -4,7 +4,9 @@ import (
 	"be-assignment/domain"
 	"be-assignment/dto"
 	"be-assignment/internal/util"
+	"context"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -18,9 +20,15 @@ func NewService(repo domain.UserRepository) domain.UserService {
 	}
 }
 
-// GetUserByID implements domain.UserService.
-func (s *service) GetUser(id string) (domain.User, error) {
-	panic("unimplemented")
+// GetUser implements domain.UserService.
+func (s *service) GetUser(ctx context.Context) (*domain.User, error) {
+	claims := ctx.Value("x-user").(jwt.MapClaims)
+
+	user, err := s.repo.FindByID(claims["id"].(string))
+	if err != nil {
+		return &domain.User{}, err
+	}
+	return &user, nil
 }
 
 // GetAllUsers implements domain.UserService.
