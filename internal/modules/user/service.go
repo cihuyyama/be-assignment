@@ -5,7 +5,6 @@ import (
 	"be-assignment/dto"
 	"be-assignment/internal/util"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
@@ -35,10 +34,6 @@ func (s *service) GetAllUsers() ([]domain.User, error) {
 
 // CreateUser implements domain.UserService.
 func (s *service) Register(userReq dto.RegisterRequest) error {
-	if err := validator.New().Struct(userReq); err != nil {
-		return err
-	}
-
 	_, err := s.repo.FindByEmail(userReq.Email)
 	if err == nil {
 		return domain.ErrUserAlreadyExists
@@ -60,4 +55,25 @@ func (s *service) Register(userReq dto.RegisterRequest) error {
 	}
 
 	return nil
+}
+
+// Login implements domain.UserService.
+func (s *service) Login(userReq dto.LoginRequest) (dto.LoginResponse, error) {
+	userRepo, err := s.repo.FindByEmail(userReq.Email)
+	if err != nil {
+		return dto.LoginResponse{}, domain.ErrUserNotFound
+	}
+
+	if _, err := util.CheckPasswordHash(userReq.Password, userRepo.Password); err != nil {
+		return dto.LoginResponse{}, domain.ErrInvalidPassword
+	}
+
+	token, err := util.GenerateToken(&userRepo)
+	if err != nil {
+		return dto.LoginResponse{}, err
+	}
+
+	return dto.LoginResponse{
+		Token: token,
+	}, nil
 }

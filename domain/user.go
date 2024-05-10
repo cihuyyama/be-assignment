@@ -27,4 +27,5 @@ type UserService interface {
 	GetAllUsers() ([]User, error)
 	GetUser(id string) (User, error)
 	Register(userReq dto.RegisterRequest) error
+	Login(userReq dto.LoginRequest) (dto.LoginResponse, error)
 }

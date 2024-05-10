@@ -5,6 +5,7 @@ import (
 	"be-assignment/dto"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type route struct {
@@ -20,12 +21,22 @@ func NewRoute(app *gin.Engine, userService domain.UserService) {
 	{
 		v1Public.GET("/users", route.getAllUsers)
 		v1Public.POST("/register", route.Register)
+		v1Public.POST("/login", route.Login)
 	}
 }
 
 func (r *route) Register(c *gin.Context) {
 	var userReq dto.RegisterRequest
 	if err := c.ShouldBindJSON(&userReq); err != nil {
+		c.JSON(400, &dto.Response{
+			Message: err.Error(),
+			Data:    []string{},
+			Status:  400,
+		})
+		return
+	}
+
+	if err := validator.New().Struct(userReq); err != nil {
 		c.JSON(400, &dto.Response{
 			Message: err.Error(),
 			Data:    []string{},
@@ -55,6 +66,52 @@ func (r *route) Register(c *gin.Context) {
 	c.JSON(200, &dto.Response{
 		Message: "Success",
 		Data:    []string{},
+		Status:  200,
+	})
+}
+
+func (r *route) Login(c *gin.Context) {
+	var userReq dto.LoginRequest
+	if err := c.ShouldBindJSON(&userReq); err != nil {
+		c.JSON(400, &dto.Response{
+			Message: err.Error(),
+			Data:    []string{},
+			Status:  400,
+		})
+		return
+	}
+
+	if err := validator.New().Struct(userReq); err != nil {
+		c.JSON(400, &dto.Response{
+			Message: err.Error(),
+			Data:    []string{},
+			Status:  400,
+		})
+		return
+	}
+
+	loginResponse, err := r.userService.Login(userReq)
+	if err != nil {
+		if err == domain.ErrUserNotFound || err == domain.ErrInvalidPassword {
+			c.JSON(400, &dto.Response{
+				Message: err.Error(),
+				Data:    []string{},
+				Status:  400,
+			})
+			return
+		}
+
+		c.JSON(500, &dto.Response{
+			Message: err.Error(),
+			Data:    []string{},
+			Status:  500,
+		})
+		return
+	}
+
+	c.JSON(200, &dto.Response{
+		Message: "Success",
+		Data:    loginResponse,
 		Status:  200,
 	})
 }
