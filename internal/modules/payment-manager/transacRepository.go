@@ -19,7 +19,7 @@ func NewTransactionRepository(con *gorm.DB) domain.TransactionRepository {
 // FindAll implements domain.TransactionRepository.
 func (t *transactionRepository) FindAll() ([]domain.Transaction, error) {
 	var transactions []domain.Transaction
-	tx := t.db.Find(&transactions)
+	tx := t.db.Order("transaction_date_time desc").Find(&transactions)
 	if tx.Error != nil {
 		return []domain.Transaction{}, tx.Error
 	}

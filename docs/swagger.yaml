@@ -58,6 +58,16 @@ definitions:
     - dof_number
     - sof_number
     type: object
+  dto.WithdrawRequest:
+    properties:
+      amount:
+        type: integer
+      sof_number:
+        type: string
+    required:
+    - amount
+    - sof_number
+    type: object
 info:
   contact:
     email: support@swagger.io
@@ -179,7 +189,7 @@ paths:
       - BearerAuth: []
       summary: Transfer money
       tags:
-      - Transaction
+      - Payment Manager
   /transactions:
     get:
       consumes:
@@ -194,7 +204,7 @@ paths:
             $ref: '#/definitions/dto.Response'
       summary: Get all transactions
       tags:
-      - Transaction
+      - Payment Manager
   /users:
     get:
       consumes:
@@ -212,6 +222,30 @@ paths:
       summary: Get user data
       tags:
       - Account Manager
+  /withdraw:
+    post:
+      consumes:
+      - application/json
+      description: Withdraw money
+      parameters:
+      - description: Withdraw Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Withdraw money
+      tags:
+      - Payment Manager
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.

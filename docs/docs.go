@@ -172,7 +172,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Transaction"
+                    "Payment Manager"
                 ],
                 "summary": "Transfer money",
                 "parameters": [
@@ -206,7 +206,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Transaction"
+                    "Payment Manager"
                 ],
                 "summary": "Get all transactions",
                 "responses": {
@@ -237,6 +237,45 @@ const docTemplate = `{
                     "Account Manager"
                 ],
                 "summary": "Get user data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/withdraw": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Withdraw money",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Payment Manager"
+                ],
+                "summary": "Withdraw money",
+                "parameters": [
+                    {
+                        "description": "Withdraw Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.WithdrawRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -329,6 +368,21 @@ const docTemplate = `{
                 },
                 "sof_number": {
                     "description": "Source of Fund Number",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.WithdrawRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "sof_number"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "sof_number": {
                     "type": "string"
                 }
             }

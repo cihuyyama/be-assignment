@@ -2,6 +2,7 @@ package domain
 
 import (
 	"be-assignment/dto"
+	"context"
 	"time"
 )
 
@@ -11,7 +12,7 @@ type Transaction struct {
 	SofNumber           string    `json:"sof_number"` // Source of Fund Number
 	DofNumber           string    `json:"dof_number"` // Destination of Fund Number
 	Currency            string    `json:"currency" gorm:"default:'USD'"`
-	Amount              int       `json:"amount"`
+	Amount              uint      `json:"amount"`
 	Status              string    `json:"status" gorm:"default:'pending'"`
 	TransactionDateTime time.Time `json:"transaction_date_time" gorm:"autoCreateTime"`
 }
@@ -25,6 +26,6 @@ type TransactionRepository interface {
 
 type PaymentManagerService interface {
 	GetAllTransaction() ([]Transaction, error)
-	Withdraw(transaction Transaction) error
-	Transfer(transactionReq dto.TransferRequest) error
+	Withdraw(ctx context.Context, transactionReq dto.WithdrawRequest) error
+	Transfer(ctx context.Context, transactionReq dto.TransferRequest) error
 }

@@ -27,6 +27,7 @@ func NewPaymentHandler(app *gin.Engine, service domain.PaymentManagerService) {
 	v1Private.Use(middleware.Authenticate())
 	{
 		v1Private.POST("/send", route.Transfer)
+		v1Private.POST("/withdraw", route.Withdraw)
 	}
 }
 
@@ -85,7 +86,84 @@ func (r *route) Transfer(c *gin.Context) {
 
 	}
 
-	if err := r.service.Transfer(tfRequest); err != nil {
+	if err := r.service.Transfer(c, tfRequest); err != nil {
+		if err == domain.ErrSourceAccountNotFound || err == domain.ErrDestinationAccountNotFound || err == domain.ErrInsufficientBalance {
+			c.JSON(400, &dto.Response{
+				Message: err.Error(),
+				Data:    []string{},
+				Status:  400,
+			})
+		}
+		if err == domain.ErrUnauthorizedAccount {
+			c.JSON(401, &dto.Response{
+				Message: err.Error(),
+				Data:    []string{},
+				Status:  401,
+			})
+		}
+
+		c.JSON(500, &dto.Response{
+			Message: err.Error(),
+			Data:    []string{},
+			Status:  500,
+		})
+		return
+	}
+
+	c.JSON(200, &dto.Response{
+		Message: "Success",
+		Data:    []string{},
+		Status:  200,
+	})
+}
+
+// @Summary Withdraw money
+// @Description Withdraw money
+// @Tags Payment Manager
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param body body dto.WithdrawRequest true "Withdraw Request"
+// @Success 200 {object} dto.Response
+// @Router /withdraw [post]
+func (r *route) Withdraw(c *gin.Context) {
+	var wdRequest dto.WithdrawRequest
+	if err := c.ShouldBindJSON(&wdRequest); err != nil {
+		c.JSON(400, &dto.Response{
+			Message: err.Error(),
+			Data:    []string{},
+			Status:  400,
+		})
+		return
+	}
+
+	if err := validator.New().Struct(wdRequest); err != nil {
+		c.JSON(400, &dto.Response{
+			Message: err.Error(),
+			Data:    []string{},
+			Status:  400,
+		})
+		return
+	}
+
+	if err := r.service.Withdraw(c, wdRequest); err != nil {
+		if err == domain.ErrSourceAccountNotFound || err == domain.ErrInsufficientBalance {
+			c.JSON(400, &dto.Response{
+				Message: err.Error(),
+				Data:    []string{},
+				Status:  400,
+			})
+			return
+		}
+		if err == domain.ErrUnauthorizedAccount {
+			c.JSON(401, &dto.Response{
+				Message: err.Error(),
+				Data:    []string{},
+				Status:  401,
+			})
+			return
+		}
+
 		c.JSON(500, &dto.Response{
 			Message: err.Error(),
 			Data:    []string{},

@@ -20,7 +20,7 @@ type PaymentAccount struct {
 	UserID         string           `json:"user_id"`
 	AccountNumber  string           `json:"account_number" gorm:"unique"`
 	AccountType    string           `json:"account_type"`
-	Balance        int              `json:"balance"`
+	Balance        uint             `json:"balance" gorm:"check:balance >= 0"`
 	PaymentHistory []PaymentHistory `json:"payment_history"`
 	CreatedAt      time.Time        `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt      time.Time        `json:"updated_at" gorm:"autoUpdateTime"`
@@ -30,7 +30,7 @@ type PaymentHistory struct {
 	ID                  string    `json:"id"`
 	PaymentAccountID    string    `json:"payment_account_ID"`
 	TransactionID       string    `json:"transaction_id"`
-	Amount              int       `json:"amount"`
+	Amount              uint      `json:"amount"`
 	TransactionType     string    `json:"transaction_type"` // credit or debit
 	TransactionDateTime time.Time `json:"transaction_date_time" gorm:"autoCreateTime"`
 }
@@ -49,6 +49,7 @@ type AccountRepository interface {
 	FindByAccountNumber(accountNumber string) (PaymentAccount, error)
 	Insert(account PaymentAccount) error
 	Update(account PaymentAccount) error
+	UpdateBalanceWithPessimisticLock(account PaymentAccount) error
 	Delete(accountNumber string) error
 }
 

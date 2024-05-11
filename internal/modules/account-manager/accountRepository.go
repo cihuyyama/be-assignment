@@ -4,6 +4,7 @@ import (
 	"be-assignment/domain"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type accountRepository struct {
@@ -39,7 +40,9 @@ func (a *accountRepository) FindByID(id string) (domain.PaymentAccount, error) {
 // FindByUserID implements domain.AccountRepository.
 func (a *accountRepository) FindByUserID(userID string) ([]domain.PaymentAccount, error) {
 	var accounts []domain.PaymentAccount
-	tx := a.db.Preload("PaymentHistory").Where("user_id = ?", userID).Find(&accounts)
+	tx := a.db.Preload("PaymentHistory", func(db *gorm.DB) *gorm.DB {
+		return db.Order("payment_histories.transaction_date_time desc")
+	}).Where("user_id = ?", userID).Find(&accounts)
 	if tx.Error != nil {
 		return []domain.PaymentAccount{}, tx.Error
 	}
@@ -58,6 +61,17 @@ func (a *accountRepository) Insert(account domain.PaymentAccount) error {
 // Update implements domain.AccountRepository.
 func (a *accountRepository) Update(account domain.PaymentAccount) error {
 	tx := a.db.Save(&account)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
+}
+
+// UpdateAmountWithOptimisticLock implements domain.AccountRepository.
+func (a *accountRepository) UpdateBalanceWithPessimisticLock(account domain.PaymentAccount) error {
+	tx := a.db.Model(&account).Clauses(clause.Locking{
+		Strength: "UPDATE",
+	}).Save(&account)
 	if tx.Error != nil {
 		return tx.Error
 	}
