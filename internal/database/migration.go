@@ -11,5 +11,6 @@ func Migrate(db *gorm.DB) {
 		&domain.User{},
 		&domain.PaymentAccount{},
 		&domain.PaymentHistory{},
+		&domain.Transaction{},
 	)
 }

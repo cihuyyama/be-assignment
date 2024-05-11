@@ -4,6 +4,7 @@ import (
 	"be-assignment/internal/config"
 	"be-assignment/internal/database"
 	accountmanager "be-assignment/internal/modules/account-manager"
+	paymentmanager "be-assignment/internal/modules/payment-manager"
 	"log"
 
 	docs "be-assignment/docs"
@@ -41,13 +42,17 @@ func main() {
 
 	userRepository := accountmanager.NewUserRepository(db)
 	accountRepository := accountmanager.NewAccountRepository(db)
+	paymentHistoryRepository := accountmanager.NewHistoryRepository(db)
+	transactionRepository := paymentmanager.NewTransactionRepository(db)
 
 	accountManagerService := accountmanager.NewService(userRepository, accountRepository)
+	paymentManagerService := paymentmanager.NewService(transactionRepository, accountRepository, paymentHistoryRepository)
 
 	app := gin.Default()
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
 	accountmanager.NewRoute(app, accountManagerService)
+	paymentmanager.NewPaymentHandler(app, paymentManagerService)
 
 	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 

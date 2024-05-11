@@ -13,5 +13,8 @@ var (
 )
 
 var (
-	ErrAccountAlreadyExists = errors.New("account already exists")
+	ErrAccountAlreadyExists       = errors.New("account already exists")
+	ErrSourceAccountNotFound      = errors.New("source account not found")
+	ErrDestinationAccountNotFound = errors.New("destination account not found")
+	ErrInsufficientBalance        = errors.New("insufficient balance")
 )

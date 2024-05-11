@@ -1,7 +1,7 @@
 package dto
 
 type CreateAccountRequest struct {
-	AccountNumber string `json:"account_number"`
-	Type          string `json:"type"`
-	Balance       int    `json:"balance"`
+	AccountNumber string `json:"account_number" validate:"required"`
+	AccountType   string `json:"type" validate:"required"`
+	Balance       int    `json:"balance" validate:"required"`
 }

@@ -88,7 +88,7 @@ func (s *service) CreateAccount(ctx context.Context, accountReq dto.CreateAccoun
 	var account domain.PaymentAccount
 	account.ID = uuid.New().String()
 	account.AccountNumber = accountReq.AccountNumber
-	account.Type = accountReq.Type
+	account.AccountType = accountReq.AccountType
 	account.Balance = accountReq.Balance
 
 	claims := ctx.Value("x-user").(jwt.MapClaims)

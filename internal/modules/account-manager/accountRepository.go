@@ -57,7 +57,11 @@ func (a *accountRepository) Insert(account domain.PaymentAccount) error {
 
 // Update implements domain.AccountRepository.
 func (a *accountRepository) Update(account domain.PaymentAccount) error {
-	panic("unimplemented")
+	tx := a.db.Save(&account)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
 }
 
 // Delete implements domain.AccountRepository.

@@ -31,7 +31,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get all user's account using token from the authorization header",
+                "description": "Get all user's account using token from the authorization header and transactions per account",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,7 +41,7 @@ const docTemplate = `{
                 "tags": [
                     "Account Manager"
                 ],
-                "summary": "Get all user's account",
+                "summary": "Get all user's account and user's transactions per account",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -157,6 +157,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/send": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Transfer money",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Transfer money",
+                "parameters": [
+                    {
+                        "description": "Transfer Request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.TransferRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions": {
+            "get": {
+                "description": "Get all transactions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Get all transactions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "security": [
@@ -189,6 +251,11 @@ const docTemplate = `{
     "definitions": {
         "dto.CreateAccountRequest": {
             "type": "object",
+            "required": [
+                "account_number",
+                "balance",
+                "type"
+            ],
             "properties": {
                 "account_number": {
                     "type": "string"
@@ -242,6 +309,27 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
+                }
+            }
+        },
+        "dto.TransferRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "dof_number",
+                "sof_number"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "dof_number": {
+                    "description": "Destination of Fund Number",
+                    "type": "string"
+                },
+                "sof_number": {
+                    "description": "Source of Fund Number",
+                    "type": "string"
                 }
             }
         }

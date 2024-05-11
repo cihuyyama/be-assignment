@@ -19,7 +19,7 @@ type PaymentAccount struct {
 	ID             string           `json:"id"`
 	UserID         string           `json:"user_id"`
 	AccountNumber  string           `json:"account_number" gorm:"unique"`
-	Type           string           `json:"type"`
+	AccountType    string           `json:"account_type"`
 	Balance        int              `json:"balance"`
 	PaymentHistory []PaymentHistory `json:"payment_history"`
 	CreatedAt      time.Time        `json:"created_at" gorm:"autoCreateTime"`
@@ -27,12 +27,12 @@ type PaymentAccount struct {
 }
 
 type PaymentHistory struct {
-	ID                  string `json:"id"`
-	PaymentAccountID    string `json:"payment_account_id"`
-	TransactionID       string `json:"transaction_id"`
-	Amount              int    `json:"amount"`
-	TransactionType     string `json:"transaction_type"`
-	TransactionDateTime string `json:"transaction_date_time" gorm:"autoCreateTime"`
+	ID                  string    `json:"id"`
+	PaymentAccountID    string    `json:"payment_account_ID"`
+	TransactionID       string    `json:"transaction_id"`
+	Amount              int       `json:"amount"`
+	TransactionType     string    `json:"transaction_type"` // credit or debit
+	TransactionDateTime time.Time `json:"transaction_date_time" gorm:"autoCreateTime"`
 }
 
 type UserRepository interface {
@@ -50,6 +50,10 @@ type AccountRepository interface {
 	Insert(account PaymentAccount) error
 	Update(account PaymentAccount) error
 	Delete(accountNumber string) error
+}
+
+type PaymentHistoryRepository interface {
+	Insert(paymentHistory PaymentHistory) error
 }
 
 type AccountManagerService interface {

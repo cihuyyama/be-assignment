@@ -8,6 +8,10 @@ definitions:
         type: integer
       type:
         type: string
+    required:
+    - account_number
+    - balance
+    - type
     type: object
   dto.LoginRequest:
     properties:
@@ -39,6 +43,21 @@ definitions:
       status:
         type: integer
     type: object
+  dto.TransferRequest:
+    properties:
+      amount:
+        type: integer
+      dof_number:
+        description: Destination of Fund Number
+        type: string
+      sof_number:
+        description: Source of Fund Number
+        type: string
+    required:
+    - amount
+    - dof_number
+    - sof_number
+    type: object
 info:
   contact:
     email: support@swagger.io
@@ -57,6 +76,7 @@ paths:
       consumes:
       - application/json
       description: Get all user's account using token from the authorization header
+        and transactions per account
       produces:
       - application/json
       responses:
@@ -66,7 +86,7 @@ paths:
             $ref: '#/definitions/dto.Response'
       security:
       - BearerAuth: []
-      summary: Get all user's account
+      summary: Get all user's account and user's transactions per account
       tags:
       - Account Manager
     post:
@@ -136,6 +156,45 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+  /send:
+    post:
+      consumes:
+      - application/json
+      description: Transfer money
+      parameters:
+      - description: Transfer Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TransferRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Transfer money
+      tags:
+      - Transaction
+  /transactions:
+    get:
+      consumes:
+      - application/json
+      description: Get all transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Get all transactions
+      tags:
+      - Transaction
   /users:
     get:
       consumes:
