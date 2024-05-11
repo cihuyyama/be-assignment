@@ -1,5 +1,14 @@
 basePath: /api/v1
 definitions:
+  dto.CreateAccountRequest:
+    properties:
+      account_number:
+        type: string
+      balance:
+        type: integer
+      type:
+        type: string
+    type: object
   dto.LoginRequest:
     properties:
       email:
@@ -18,12 +27,9 @@ definitions:
       password:
         minLength: 5
         type: string
-      username:
-        type: string
     required:
     - email
     - password
-    - username
     type: object
   dto.Response:
     properties:
@@ -46,6 +52,46 @@ info:
   title: ConcreteAI-Assignment API
   version: "1.0"
 paths:
+  /accounts:
+    get:
+      consumes:
+      - application/json
+      description: Get all user's account using token from the authorization header
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Get all user's account
+      tags:
+      - Account Manager
+    post:
+      consumes:
+      - application/json
+      description: Create a new account
+      parameters:
+      - description: Create Account Request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Create a new account
+      tags:
+      - Account Manager
   /login:
     post:
       consumes:
@@ -94,7 +140,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get user data
+      description: Get user data using token from the authorization header
       produces:
       - application/json
       responses:
@@ -106,22 +152,7 @@ paths:
       - BearerAuth: []
       summary: Get user data
       tags:
-      - User
-  /users/all:
-    get:
-      consumes:
-      - application/json
-      description: Get all user data
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.Response'
-      summary: Get all user data
-      tags:
-      - User
+      - Account Manager
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.

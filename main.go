@@ -3,7 +3,7 @@ package main
 import (
 	"be-assignment/internal/config"
 	"be-assignment/internal/database"
-	"be-assignment/internal/modules/user"
+	accountmanager "be-assignment/internal/modules/account-manager"
 	"log"
 
 	docs "be-assignment/docs"
@@ -39,14 +39,15 @@ func main() {
 
 	database.Migrate(db)
 
-	userRepository := user.NewRepository(db)
+	userRepository := accountmanager.NewUserRepository(db)
+	accountRepository := accountmanager.NewAccountRepository(db)
 
-	userService := user.NewService(userRepository)
+	accountManagerService := accountmanager.NewService(userRepository, accountRepository)
 
 	app := gin.Default()
 	docs.SwaggerInfo.BasePath = "/api/v1"
 
-	user.NewRoute(app, userService)
+	accountmanager.NewRoute(app, accountManagerService)
 
 	app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 

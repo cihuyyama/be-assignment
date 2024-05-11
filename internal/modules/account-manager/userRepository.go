@@ -1,4 +1,4 @@
-package user
+package accountmanager
 
 import (
 	"be-assignment/domain"
@@ -6,18 +6,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type repository struct {
+type userRepository struct {
 	db *gorm.DB
 }
 
-func NewRepository(con *gorm.DB) domain.UserRepository {
-	return &repository{
+func NewUserRepository(con *gorm.DB) domain.UserRepository {
+	return &userRepository{
 		db: con,
 	}
 }
 
 // FindByID implements domain.UserRepository.
-func (r *repository) FindByID(id string) (domain.User, error) {
+func (r *userRepository) FindByID(id string) (domain.User, error) {
 	var user domain.User
 	tx := r.db.Where("id = ?", id).First(&user)
 	if tx.Error != nil {
@@ -27,7 +27,7 @@ func (r *repository) FindByID(id string) (domain.User, error) {
 }
 
 // FindByEmail implements domain.UserRepository.
-func (r *repository) FindByEmail(email string) (domain.User, error) {
+func (r *userRepository) FindByEmail(email string) (domain.User, error) {
 	var user domain.User
 	tx := r.db.Where("email = ?", email).First(&user)
 	if tx.Error != nil {
@@ -37,7 +37,7 @@ func (r *repository) FindByEmail(email string) (domain.User, error) {
 }
 
 // FindAll implements domain.UserRepository.
-func (r *repository) FindAll() ([]domain.User, error) {
+func (r *userRepository) FindAll() ([]domain.User, error) {
 	var users *[]domain.User
 	tx := r.db.Find(&users)
 	if tx.Error != nil {
@@ -47,7 +47,7 @@ func (r *repository) FindAll() ([]domain.User, error) {
 }
 
 // Insert implements domain.UserRepository.
-func (r *repository) Insert(user domain.User) error {
+func (r *userRepository) Insert(user domain.User) error {
 	tx := r.db.Create(&user)
 	if tx.Error != nil {
 		return tx.Error
@@ -56,7 +56,7 @@ func (r *repository) Insert(user domain.User) error {
 }
 
 // Update implements domain.UserRepository.
-func (r *repository) Update(user domain.User) error {
+func (r *userRepository) Update(user domain.User) error {
 	tx := r.db.Save(&user)
 	if tx.Error != nil {
 		return tx.Error
@@ -65,7 +65,7 @@ func (r *repository) Update(user domain.User) error {
 }
 
 // Delete implements domain.UserRepository.
-func (r *repository) Delete(id string) error {
+func (r *userRepository) Delete(id string) error {
 	tx := r.db.Where("id = ?", id).Delete(&domain.User{})
 	if tx.Error != nil {
 		return tx.Error

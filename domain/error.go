@@ -11,3 +11,7 @@ var (
 var (
 	ErrInvalidToken = errors.New("invalid token")
 )
+
+var (
+	ErrAccountAlreadyExists = errors.New("account already exists")
+)
