@@ -170,7 +170,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Transfer money
+      description: |-
+        Transfer money
+        (sof_number = source of fund number)
+        (dof_number = destination of fund number)
       parameters:
       - description: Transfer Request
         in: body
@@ -226,7 +229,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Withdraw money
+      description: Withdraw money with your selected account (sof_number = source
+        of fund number)
       parameters:
       - description: Withdraw Request
         in: body

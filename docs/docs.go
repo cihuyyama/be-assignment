@@ -164,7 +164,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Transfer money",
+                "description": "Transfer money\n(sof_number = source of fund number)\n(dof_number = destination of fund number)",
                 "consumes": [
                     "application/json"
                 ],
@@ -254,7 +254,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Withdraw money",
+                "description": "Withdraw money with your selected account (sof_number = source of fund number)",
                 "consumes": [
                     "application/json"
                 ],

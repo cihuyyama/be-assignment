@@ -58,6 +58,8 @@ func (r *route) GetAllTransaction(c *gin.Context) {
 
 // @Summary Transfer money
 // @Description Transfer money
+// @Description (sof_number = source of fund number)
+// @Description (dof_number = destination of fund number)
 // @Tags Payment Manager
 // @Accept json
 // @Produce json
@@ -118,7 +120,7 @@ func (r *route) Transfer(c *gin.Context) {
 }
 
 // @Summary Withdraw money
-// @Description Withdraw money
+// @Description Withdraw money with your selected account (sof_number = source of fund number)
 // @Tags Payment Manager
 // @Accept json
 // @Produce json
