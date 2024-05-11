@@ -12,7 +12,7 @@ type Transaction struct {
 	SofNumber           string    `json:"sof_number"` // Source of Fund Number
 	DofNumber           string    `json:"dof_number"` // Destination of Fund Number
 	Currency            string    `json:"currency" gorm:"default:'USD'"`
-	Amount              uint      `json:"amount"`
+	Amount              int       `json:"amount"`
 	Status              string    `json:"status" gorm:"default:'pending'"`
 	TransactionDateTime time.Time `json:"transaction_date_time" gorm:"autoCreateTime"`
 }

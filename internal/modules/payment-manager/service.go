@@ -37,24 +37,6 @@ func (s *service) GetAllTransaction() ([]domain.Transaction, error) {
 
 // Transfer implements domain.PaymentManagerService.
 func (s *service) Transfer(ctx context.Context, transactionReq dto.TransferRequest) error {
-	sourceAccount, err := s.accountRepo.FindByAccountNumber(transactionReq.SofNumber)
-	if err != nil {
-		return domain.ErrSourceAccountNotFound
-	}
-
-	userID := ctx.Value("x-user").(jwt.MapClaims)["id"].(string)
-	if sourceAccount.UserID != userID {
-		return domain.ErrUnauthorizedAccount
-	}
-
-	destinationAccount, err := s.accountRepo.FindByAccountNumber(transactionReq.DofNumber)
-	if err != nil {
-		return domain.ErrDestinationAccountNotFound
-	}
-
-	if sourceAccount.Balance < transactionReq.Amount {
-		return domain.ErrInsufficientBalance
-	}
 
 	var transaction domain.Transaction
 	transaction.ID = uuid.New().String()
@@ -62,56 +44,112 @@ func (s *service) Transfer(ctx context.Context, transactionReq dto.TransferReque
 	transaction.SofNumber = transactionReq.SofNumber
 	transaction.DofNumber = transactionReq.DofNumber
 	transaction.Amount = transactionReq.Amount
+	transaction.Status = "pending"
 	transaction.Currency = "USD"
 	transaction.TransactionDateTime = time.Now()
 
-	err = s.transactionRepo.Insert(transaction)
-	if err != nil {
+	if err := s.transactionRepo.Insert(transaction); err != nil {
 		return err
 	}
 
+	userID := ctx.Value("x-user").(jwt.MapClaims)["id"].(string)
+
+	stop := make(chan bool)
+
 	go func() {
-		time.Sleep(30 * time.Second)
+		for {
+			select {
 
-		transaction.Status = "success"
+			case <-stop:
+				return
+			default:
+				time.Sleep(10 * time.Second)
 
-		sourceAccount.Balance -= transactionReq.Amount
-		if err = s.accountRepo.UpdateBalanceWithPessimisticLock(sourceAccount); err != nil {
-			transaction.Status = "failed"
-			log.Printf("error updating source account: %v", err)
+				transaction.Status = "success"
+
+				sourceAccount, err := s.accountRepo.FindByAccountNumber(transactionReq.SofNumber)
+				if err != nil {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					stop <- true
+				}
+
+				if sourceAccount.UserID != userID {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					stop <- true
+				}
+
+				destinationAccount, err := s.accountRepo.FindByAccountNumber(transactionReq.DofNumber)
+				if err != nil {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					stop <- true
+
+				}
+
+				if sourceAccount.Balance < transactionReq.Amount {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					stop <- true
+				}
+
+				sourceAccount.Balance -= transactionReq.Amount
+				if err = s.accountRepo.UpdateBalanceWithPessimisticLock(sourceAccount); err != nil {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					log.Printf("error updating source account: %v", err)
+					stop <- true
+				}
+
+				destinationAccount.Balance += transactionReq.Amount
+				if err = s.accountRepo.UpdateBalanceWithPessimisticLock(destinationAccount); err != nil {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					log.Printf("error updating destination account: %v", err)
+					stop <- true
+				}
+
+				var sourcePaymentHistory domain.PaymentHistory
+				sourcePaymentHistory.ID = uuid.New().String()
+				sourcePaymentHistory.PaymentAccountID = sourceAccount.ID
+				sourcePaymentHistory.TransactionID = transaction.ID
+				sourcePaymentHistory.Amount = transactionReq.Amount
+				sourcePaymentHistory.TransactionType = "debit"
+
+				if err = s.historyRepo.Insert(sourcePaymentHistory); err != nil {
+					log.Printf("error inserting payment history: %v", err)
+				}
+
+				var destinationPaymentHistory domain.PaymentHistory
+				destinationPaymentHistory.ID = uuid.New().String()
+				destinationPaymentHistory.PaymentAccountID = destinationAccount.ID
+				destinationPaymentHistory.TransactionID = transaction.ID
+				destinationPaymentHistory.Amount = transactionReq.Amount
+				destinationPaymentHistory.TransactionType = "credit"
+
+				if err = s.historyRepo.Insert(destinationPaymentHistory); err != nil {
+					log.Printf("error inserting payment history: %v", err)
+				}
+
+				if err := s.transactionRepo.Update(transaction); err != nil {
+					log.Printf("error updating transaction status: %v", err)
+				}
+			}
 		}
 
-		destinationAccount.Balance += transactionReq.Amount
-		if err = s.accountRepo.UpdateBalanceWithPessimisticLock(destinationAccount); err != nil {
-			transaction.Status = "failed"
-			log.Printf("error updating destination account: %v", err)
-		}
-
-		var sourcePaymentHistory domain.PaymentHistory
-		sourcePaymentHistory.ID = uuid.New().String()
-		sourcePaymentHistory.PaymentAccountID = sourceAccount.ID
-		sourcePaymentHistory.TransactionID = transaction.ID
-		sourcePaymentHistory.Amount = transactionReq.Amount
-		sourcePaymentHistory.TransactionType = "debit"
-
-		if err = s.historyRepo.Insert(sourcePaymentHistory); err != nil {
-			log.Printf("error inserting payment history: %v", err)
-		}
-
-		var destinationPaymentHistory domain.PaymentHistory
-		destinationPaymentHistory.ID = uuid.New().String()
-		destinationPaymentHistory.PaymentAccountID = destinationAccount.ID
-		destinationPaymentHistory.TransactionID = transaction.ID
-		destinationPaymentHistory.Amount = transactionReq.Amount
-		destinationPaymentHistory.TransactionType = "credit"
-
-		if err = s.historyRepo.Insert(destinationPaymentHistory); err != nil {
-			log.Printf("error inserting payment history: %v", err)
-		}
-
-		if err := s.transactionRepo.Update(transaction); err != nil {
-			log.Printf("error updating transaction status: %v", err)
-		}
 	}()
 
 	return nil
@@ -120,19 +158,6 @@ func (s *service) Transfer(ctx context.Context, transactionReq dto.TransferReque
 
 // Withdraw implements domain.PaymentManagerService.
 func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawRequest) error {
-	sourceAccount, err := s.accountRepo.FindByAccountNumber(transactionReq.SofNumber)
-	if err != nil {
-		return domain.ErrSourceAccountNotFound
-	}
-
-	userID := ctx.Value("x-user").(jwt.MapClaims)["id"].(string)
-	if sourceAccount.UserID != userID {
-		return domain.ErrUnauthorizedAccount
-	}
-
-	if sourceAccount.Balance < transactionReq.Amount {
-		return domain.ErrInsufficientBalance
-	}
 
 	var transaction domain.Transaction
 	transaction.ID = uuid.New().String()
@@ -143,44 +168,76 @@ func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawReque
 	transaction.Currency = "USD"
 	transaction.TransactionDateTime = time.Now()
 
-	err = s.transactionRepo.Insert(transaction)
+	err := s.transactionRepo.Insert(transaction)
 	if err != nil {
 		return err
 	}
 
+	userID := ctx.Value("x-user").(jwt.MapClaims)["id"].(string)
+
+	stop := make(chan bool)
+
 	go func() {
-		time.Sleep(30 * time.Second)
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				time.Sleep(10 * time.Second)
 
-		transaction.Status = "success"
+				transaction.Status = "success"
 
-		sourceAccount.Balance -= transactionReq.Amount
-		err = s.accountRepo.UpdateBalanceWithPessimisticLock(sourceAccount)
-		if err != nil {
-			transaction.Status = "failed"
-			log.Printf("error updating source account: %v", err)
-		}
+				sourceAccount, err := s.accountRepo.FindByAccountNumber(transactionReq.SofNumber)
+				if err != nil {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					stop <- true
+				}
 
-		var sourcePaymentHistory domain.PaymentHistory
-		sourcePaymentHistory.ID = uuid.New().String()
-		sourcePaymentHistory.PaymentAccountID = sourceAccount.ID
-		sourcePaymentHistory.TransactionID = transaction.ID
-		sourcePaymentHistory.Amount = transactionReq.Amount
-		sourcePaymentHistory.TransactionType = "debit"
+				if sourceAccount.UserID != userID {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					stop <- true
+				}
 
-		err = s.historyRepo.Insert(sourcePaymentHistory)
-		if err != nil {
-			log.Printf("error inserting payment history: %v", err)
-		}
+				if sourceAccount.Balance < transactionReq.Amount {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					stop <- true
+				}
 
-		err := s.transactionRepo.Update(transaction)
-		if err != nil {
-			log.Printf("error updating transaction status: %v", err)
-		}
+				sourceAccount.Balance -= transactionReq.Amount
+				err = s.accountRepo.UpdateBalanceWithPessimisticLock(sourceAccount)
+				if err != nil {
+					transaction.Status = "failed"
+					if err := s.transactionRepo.Update(transaction); err != nil {
+						log.Printf("error updating transaction status: %v", err)
+					}
+					log.Printf("error updating source account: %v", err)
+					stop <- true
+				}
 
-		if transaction.Status == "success" {
-			log.Printf("transaction %s completed", transaction.ID)
-		} else {
-			log.Printf("transaction %s failed", transaction.ID)
+				var sourcePaymentHistory domain.PaymentHistory
+				sourcePaymentHistory.ID = uuid.New().String()
+				sourcePaymentHistory.PaymentAccountID = sourceAccount.ID
+				sourcePaymentHistory.TransactionID = transaction.ID
+				sourcePaymentHistory.Amount = transactionReq.Amount
+				sourcePaymentHistory.TransactionType = "debit"
+
+				if err := s.historyRepo.Insert(sourcePaymentHistory); err != nil {
+					log.Printf("error inserting payment history: %v", err)
+				}
+
+				if err := s.transactionRepo.Update(transaction); err != nil {
+					log.Printf("error updating transaction status: %v", err)
+				}
+			}
 		}
 	}()
 
