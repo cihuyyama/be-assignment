@@ -9,6 +9,7 @@ This web service is designed accordingly close to Uncle Bob's "Clean Architectur
 - **PostgreSQL**: The relational database used for storing data.
 - **Docker/Docker Compose**: Containerization technology used to deploy and manage the application.
 - **GORM**: Object-Relational Mapping (ORM) library used for database interactions.
+- **JWT Authentication**: I build myself JSON Web Token (JWT) authentication mechanism used for securing endpoints.
 - **Swagger**: API documentation tool used to document the endpoints.
 
 ## Folder Sturcture
