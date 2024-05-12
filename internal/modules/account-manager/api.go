@@ -35,7 +35,7 @@ func NewRoute(app *gin.Engine, accountManagerService domain.AccountManagerServic
 
 // @Summary Register a new user
 // @Description Register a new user
-// @Tags Auth
+// @Tags Account Manager
 // @Accept json
 // @Produce json
 // @Param body body dto.RegisterRequest true "Register Request"
@@ -88,7 +88,7 @@ func (r *route) Register(c *gin.Context) {
 
 // @Summary Login a user
 // @Description Login a user
-// @Tags Auth
+// @Tags Account Manager
 // @Accept json
 // @Produce json
 // @Param body body dto.LoginRequest true "Login Request"
