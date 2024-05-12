@@ -40,6 +40,7 @@ simply run with:
 ```bash
 docker-compose up -d
 ```
+The app is run on `http://localhost:5000`
 
 ## Usage
 To interact with the web service, you can use the provided Swagger documentation. Follow the steps below:
