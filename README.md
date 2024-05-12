@@ -37,6 +37,7 @@ This approach helps prevent data anomalies, such as lost updates or inconsistent
 ## Run with Docker compose
 To run this web service using Docker, make sure you have Docker installed on your system.
 simply run with:
+<br>*(if u dont want to bother with configuring environment, its ok)
 ```bash
 docker-compose up -d
 ```
