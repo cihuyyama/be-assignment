@@ -38,7 +38,7 @@ func (s *service) GetAllTransaction() ([]domain.Transaction, error) {
 // Transfer implements domain.PaymentManagerService.
 func (s *service) Transfer(ctx context.Context, transactionReq dto.TransferRequest) error {
 
-	var transaction domain.Transaction
+	transaction := new(domain.Transaction)
 	transaction.ID = uuid.New().String()
 	transaction.Name = "transfer"
 	transaction.SofNumber = transactionReq.SofNumber
@@ -97,8 +97,6 @@ func (s *service) Transfer(ctx context.Context, transactionReq dto.TransferReque
 					if err := s.transactionRepo.Update(transaction); err != nil {
 						log.Printf("error updating transaction status: %v", err)
 					}
-					transaction.Status = "success"
-					log.Printf("insufficient balance")
 					stop <- true
 				}
 
@@ -148,6 +146,7 @@ func (s *service) Transfer(ctx context.Context, transactionReq dto.TransferReque
 				if err := s.transactionRepo.Update(transaction); err != nil {
 					log.Printf("error updating transaction status: %v", err)
 				}
+				stop <- true
 			}
 		}
 
@@ -160,7 +159,7 @@ func (s *service) Transfer(ctx context.Context, transactionReq dto.TransferReque
 // Withdraw implements domain.PaymentManagerService.
 func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawRequest) error {
 
-	var transaction domain.Transaction
+	transaction := new(domain.Transaction)
 	transaction.ID = uuid.New().String()
 	transaction.Name = "withdraw"
 	transaction.SofNumber = transactionReq.SofNumber
@@ -176,12 +175,12 @@ func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawReque
 
 	userID := ctx.Value("x-user").(jwt.MapClaims)["id"].(string)
 
-	stopTransfer := make(chan bool)
+	stopChannel := make(chan bool)
 
 	go func() {
 		for {
 			select {
-			case <-stopTransfer:
+			case <-stopChannel:
 				return
 			default:
 				time.Sleep(30 * time.Second)
@@ -192,7 +191,7 @@ func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawReque
 					if err := s.transactionRepo.Update(transaction); err != nil {
 						log.Printf("error updating transaction status: %v", err)
 					}
-					stopTransfer <- true
+					stopChannel <- true
 				}
 
 				if sourceAccount.UserID != userID {
@@ -200,7 +199,7 @@ func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawReque
 					if err := s.transactionRepo.Update(transaction); err != nil {
 						log.Printf("error updating transaction status: %v", err)
 					}
-					stopTransfer <- true
+					stopChannel <- true
 				}
 
 				if sourceAccount.Balance < transactionReq.Amount {
@@ -208,9 +207,7 @@ func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawReque
 					if err := s.transactionRepo.Update(transaction); err != nil {
 						log.Printf("error updating transaction status: %v", err)
 					}
-					transaction.Status = "success"
-					log.Printf("insufficient balance")
-					stopTransfer <- true
+					stopChannel <- true
 				}
 
 				sourceAccount.Balance -= transactionReq.Amount
@@ -221,7 +218,7 @@ func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawReque
 						log.Printf("error updating transaction status: %v", err)
 					}
 					log.Printf("error updating source account: %v", err)
-					stopTransfer <- true
+					stopChannel <- true
 				}
 
 				var sourcePaymentHistory domain.PaymentHistory
@@ -239,6 +236,7 @@ func (s *service) Withdraw(ctx context.Context, transactionReq dto.WithdrawReque
 				if err := s.transactionRepo.Update(transaction); err != nil {
 					log.Printf("error updating transaction status: %v", err)
 				}
+				stopChannel <- true
 			}
 		}
 	}()

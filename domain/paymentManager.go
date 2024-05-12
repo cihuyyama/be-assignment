@@ -20,8 +20,8 @@ type Transaction struct {
 type TransactionRepository interface {
 	FindAll() ([]Transaction, error)
 	FindByID(id string) (Transaction, error)
-	Update(transaction Transaction) error
-	Insert(transaction Transaction) error
+	Update(transaction *Transaction) error
+	Insert(transaction *Transaction) error
 }
 
 type PaymentManagerService interface {

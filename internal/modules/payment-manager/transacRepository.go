@@ -37,7 +37,7 @@ func (t *transactionRepository) FindByID(id string) (domain.Transaction, error) 
 }
 
 // Insert implements domain.TransactionRepository.
-func (t *transactionRepository) Insert(transaction domain.Transaction) error {
+func (t *transactionRepository) Insert(transaction *domain.Transaction) error {
 	tx := t.db.Create(&transaction)
 	if tx.Error != nil {
 		return tx.Error
@@ -46,7 +46,7 @@ func (t *transactionRepository) Insert(transaction domain.Transaction) error {
 }
 
 // Update implements domain.TransactionRepository.
-func (t *transactionRepository) Update(transaction domain.Transaction) error {
+func (t *transactionRepository) Update(transaction *domain.Transaction) error {
 	tx := t.db.Save(&transaction)
 	if tx.Error != nil {
 		return tx.Error

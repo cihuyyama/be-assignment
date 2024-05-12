@@ -92,7 +92,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Account Manager"
                 ],
                 "summary": "Login a user",
                 "parameters": [
@@ -126,7 +126,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Account Manager"
                 ],
                 "summary": "Register a new user",
                 "parameters": [

@@ -10,6 +10,7 @@ services:
     environment:
       - DB_HOST=postgres
       - GIN_MODE=release
+    container_name: services
     depends_on:
       - postgres
 
@@ -21,6 +22,7 @@ services:
       - POSTGRES_DB=concrete
     ports:
       - 5432:5432
+    container_name: postgres
     volumes:
       - db-data:/var/lib/postgresql/data
 

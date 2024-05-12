@@ -99,7 +99,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Account Manager"
                 ],
                 "summary": "Login a user",
                 "parameters": [
@@ -133,7 +133,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Account Manager"
                 ],
                 "summary": "Register a new user",
                 "parameters": [
